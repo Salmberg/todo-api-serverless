@@ -28,7 +28,12 @@ functions:
       - httpApi:
           path: '/todos'
           method: POST
-
+  deleteTodo:
+    handler: functions/deleteTodo/index.handler
+    events:
+      - httpApi:
+          path: '/todos/{id}'
+          method: DELETE
           
 
 resources:
