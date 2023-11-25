@@ -22,4 +22,25 @@ functions:
       - httpApi:
           path: '/todos'
           method: GET
+  postTodo:
+   handler: functions/postTodo/index.handler
+   events:
+      - httpApi:
+          path: '/todos'
+          method: POST
+
           
+
+resources:
+  Resources:
+    todosDb:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: todos-db
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST

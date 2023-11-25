@@ -1,19 +1,16 @@
+const AWS = require('aws-sdk');
 const { sendResponse } = require('../../responses/index');
-
-var todos = [
-    { id: 1, text: 'Walk the dog' },
-    { id: 2, text: 'Wash the dishes' },
-    { id: 3, text: 'Do laundry' }
-];
-
+const db = new AWS.DynamoDB.DocumentClient();
 
 
 
 exports.handler = async (event, context) => {
 
+    const {Items} = await db.scan({
+        TableName: 'todos-db',
+    }).promise();
+
+        return sendResponse(200, {success: true, todos : Items});
    
-
-    return sendResponse(200, {todos});
-
 
 }
