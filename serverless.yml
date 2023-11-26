@@ -34,6 +34,12 @@ functions:
       - httpApi:
           path: '/todos/{id}'
           method: DELETE
+  editTodo:
+    handler: functions/editTodo/index.handler
+    events:
+      - httpApi:
+          path: '/todos/{id}'
+          method: PATCH        
           
 
 resources:

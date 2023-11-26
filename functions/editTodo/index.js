@@ -3,11 +3,11 @@ const { sendResponse } = require('../../responses/index');
 const db = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async (event, context) => {
-
   try {
+    // Hämta Todo-id från sökvägen i URL:en
     const todoId = event.pathParameters.id;
 
-    // Kolla först om något id har angivits
+    // Kontrollera om todoId finns
     if (!todoId) {
       return sendResponse(400, { success: false, message: 'Todo ID is required.' });
     }
@@ -20,32 +20,28 @@ exports.handler = async (event, context) => {
       },
     }).promise();
 
-    // Om Todo med det ID inte finns
+    // Om Todo inte finns, returnera ett felmeddelande
     if (!getTodoResult.Item) {
       return sendResponse(404, { success: false, message: 'Todo not found.' });
     }
 
+    // Parsa inkommande data från event body
     const requestBody = JSON.parse(event.body);
 
-    // Uppdatera modifiedAt endast om det har gjorts några ändringar
-    if (Object.keys(requestBody).length > 0) {
-      // Uppdatera Todo-fält
-      const updatedTodo = {
-        ...getTodoResult.Item, 
-        ...requestBody, 
-        modifiedAt: new Date().toISOString(), 
-      };
+    // Uppdatera Todo-fält
+    const updatedTodo = {
+      ...getTodoResult.Item, // Behåll befintliga fält
+      ...requestBody, // Uppdatera med nya värden från request body
+      modifiedAt: new Date().toISOString(), // Uppdatera modifiedAt
+    };
 
-      // Denna uppdaterar Todo i DynamoDB
-      await db.put({
-        TableName: 'todos-db',
-        Item: updatedTodo,
-      }).promise();
+    // Uppdatera Todo i DynamoDB
+    await db.put({
+      TableName: 'todos-db',
+      Item: updatedTodo,
+    }).promise();
 
-      return sendResponse(200, { success: true, todo: updatedTodo, message: 'Todo updated successfully.' });
-    } else {
-      return sendResponse(200, { success: false, message: 'No changes to update.' });
-    }
+    return sendResponse(200, { success: true, todo: updatedTodo, message: 'Todo updated successfully.' });
   } catch (error) {
     console.error('Error updating Todo:', error);
 
