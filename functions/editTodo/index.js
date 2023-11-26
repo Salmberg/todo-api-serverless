@@ -3,11 +3,11 @@ const { sendResponse } = require('../../responses/index');
 const db = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async (event, context) => {
+
   try {
-    // Hämta Todo-id från sökvägen i URL:en
     const todoId = event.pathParameters.id;
 
-    // Kontrollera om todoId finns
+    // Kolla om någon ID är angiven
     if (!todoId) {
       return sendResponse(400, { success: false, message: 'Todo ID is required.' });
     }
@@ -20,7 +20,7 @@ exports.handler = async (event, context) => {
       },
     }).promise();
 
-    // Om Todo inte finns, returnera ett felmeddelande
+    //Annars detta felmedelande
     if (!getTodoResult.Item) {
       return sendResponse(404, { success: false, message: 'Todo not found.' });
     }
@@ -30,12 +30,12 @@ exports.handler = async (event, context) => {
 
     // Uppdatera Todo-fält
     const updatedTodo = {
-      ...getTodoResult.Item, // Behåll befintliga fält
-      ...requestBody, // Uppdatera med nya värden från request body
-      modifiedAt: new Date().toISOString(), // Uppdatera modifiedAt
+      ...getTodoResult.Item, 
+      ...requestBody, 
+      modifiedAt: new Date().toISOString(), // Nytt timestamp för ändringen
     };
 
-    // Uppdatera Todo i DynamoDB
+    // Om alla kraven är uppfyllda, uppdatera Todo i DynamoDB
     await db.put({
       TableName: 'todos-db',
       Item: updatedTodo,
