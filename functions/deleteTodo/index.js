@@ -1,9 +1,15 @@
 const AWS = require('aws-sdk');
 const { sendResponse } = require('../../responses/index');
+const middy = require('@middy/core');
+const { validateToken } = require('../middleware/auth');
 const db = new AWS.DynamoDB.DocumentClient();
 
-exports.handler = async (event, context) => {
+const deleteTodo = async (event, context) => {
   try {
+    if (event?.error && event?.error === '401') {
+      return sendResponse(401, { success: false, message: 'Invalid Token' });
+    }
+
     const todoId = event.pathParameters.id;
 
     if (!todoId) {
@@ -23,7 +29,8 @@ exports.handler = async (event, context) => {
       return sendResponse(404, { success: false, message: 'Todo not found.' });
     }
 
-    // Om Todo finns, fortsätt med att ta bort det
+
+    // Om Todo finns och token är giltig, fortsätt med att ta bort det
     await db.delete({
       TableName: 'todos-db',
       Key: {
@@ -38,3 +45,8 @@ exports.handler = async (event, context) => {
     return sendResponse(500, { success: false, message: 'Error deleting Todo.' });
   }
 };
+
+const handler = middy(deleteTodo)
+  .use(validateToken);
+
+module.exports = { handler };
