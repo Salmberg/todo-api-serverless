@@ -1,54 +1,34 @@
 const AWS = require('aws-sdk');
+const { v4: uuidv4 } = require('uuid');
 const { sendResponse } = require('../../responses/index');
 const db = new AWS.DynamoDB.DocumentClient();
 
-exports.handler = async (event, context) => {
-
+exports.handler = async (event) => {
   try {
-    const todoId = event.pathParameters.id;
+    const todo = JSON.parse(event.body);
 
-    // Kolla först om något id har angivits
-    if (!todoId) {
-      return sendResponse(400, { success: false, message: 'Todo ID is required.' });
-    }
+    // Skapa ett unikt ID för den nya todon med uuid
+    const newTodoId = uuidv4();
 
-    // Hämta befintlig Todo från DynamoDB för att kontrollera om den finns
-    const getTodoResult = await db.get({
+    const currentDate = new Date().toISOString();
+
+    await db.put({
       TableName: 'todos-db',
-      Key: {
-        id: todoId,
+      Item: {
+        id: newTodoId,
+        title: todo.title,
+        text: todo.text,
+        createdAt: currentDate,
+        modifiedAt: currentDate,
       },
     }).promise();
 
-    // Om Todo med det ID inte finns
-    if (!getTodoResult.Item) {
-      return sendResponse(404, { success: false, message: 'Todo not found.' });
-    }
-
-    const requestBody = JSON.parse(event.body);
-
-    // Uppdatera modifiedAt endast om det har gjorts några ändringar
-    if (Object.keys(requestBody).length > 0) {
-      // Uppdatera Todo-fält
-      const updatedTodo = {
-        ...getTodoResult.Item, 
-        ...requestBody, 
-        modifiedAt: new Date().toISOString(), 
-      };
-
-      // Denna uppdaterar Todo i DynamoDB
-      await db.put({
-        TableName: 'todos-db',
-        Item: updatedTodo,
-      }).promise();
-
-      return sendResponse(200, { success: true, todo: updatedTodo, message: 'Todo updated successfully.' });
-    } else {
-      return sendResponse(200, { success: false, message: 'No changes to update.' });
-    }
+    return sendResponse(200, { success: true, message: 'Todo created' });
   } catch (error) {
-    console.error('Error updating Todo:', error);
+    console.error('Error creating Todo:', error);
 
-    return sendResponse(500, { success: false, message: 'Error updating Todo.' });
+    return sendResponse(500, { success: false, message: 'Error creating Todo.' });
   }
 };
+
+module.exports = { handler: exports.handler };
