@@ -8,23 +8,24 @@ const db = new AWS.DynamoDB.DocumentClient();
 const postTodo = async (event) => {
   try {
     if (event?.error && event?.error === '401') {
-        return sendResponse(401, { success: false, message: 'Invalid Token' });
+      return sendResponse(401, { success: false, message: 'Invalid Token' });
     }
 
+    const { title, text } = JSON.parse(event.body);
+    const username = event.username;
+    const userId = event.id;
 
-    const todo = JSON.parse(event.body);
-
-    // Skapa ett unikt ID för den nya todon med uuid
     const newTodoId = uuidv4();
-
     const currentDate = new Date().toISOString();
 
     await db.put({
       TableName: 'todos-db',
       Item: {
         id: newTodoId,
-        title: todo.title,
-        text: todo.text,
+        userId: userId,
+        username: username, 
+        title: title,
+        text: text,
         createdAt: currentDate,
         modifiedAt: currentDate,
       },
