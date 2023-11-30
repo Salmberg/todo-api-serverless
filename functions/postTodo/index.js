@@ -1,10 +1,17 @@
 const AWS = require('aws-sdk');
 const { v4: uuidv4 } = require('uuid');
 const { sendResponse } = require('../../responses/index');
+const middy = require('@middy/core'); 
+const { validateToken } = require('../middleware/auth'); 
 const db = new AWS.DynamoDB.DocumentClient();
 
-exports.handler = async (event) => {
+const postTodo = async (event) => {
   try {
+    if (event?.error && event?.error === '401') {
+        return sendResponse(401, { success: false, message: 'Invalid Token' });
+    }
+
+
     const todo = JSON.parse(event.body);
 
     // Skapa ett unikt ID för den nya todon med uuid
@@ -31,4 +38,7 @@ exports.handler = async (event) => {
   }
 };
 
-module.exports = { handler: exports.handler };
+const handler = middy(postTodo)
+  .use(validateToken);
+
+module.exports = { handler };
