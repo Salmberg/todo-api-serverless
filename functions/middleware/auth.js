@@ -11,7 +11,7 @@ const validateToken = {
             const data = jwt.verify(token, 'aabbcc');
 
             request.event.id = data.id;
-            request.event.username = data.username;
+            request.event.username = data.username; 
 
             return request.response;
         } catch (error) {
