@@ -33,21 +33,29 @@ const updateTodo = async (event, context) => {
 
     // Kontrollera om användaren äger den aktuella todo
     if (getTodoResult.Item.userId !== userId) {
-      return sendResponse(403, { success: false, message: 'Unauthorized: You cannot update this Todo.' });
+      return sendResponse(401, { success: false, message: 'Unauthorized: You cannot update this Todo.' });
     }
 
     const requestBody = JSON.parse(event.body);
 
+    // Validera längden på titeln
+    if (requestBody.title && requestBody.title.length > 50) {
+      return sendResponse(400, { success: false, message: 'Please write a shorter title, max 50 characters' });
+    }
+
+    // Validera längden på texten
+    if (requestBody.text && requestBody.text.length > 300) {
+      return sendResponse(400, { success: false, message: 'Please write a shorter text, max 300 characters' });
+    }
+
     // Kontrollera om det finns några ändringar att uppdatera
     if (Object.keys(requestBody).length > 0) {
-      
       const updatedTodo = {
         ...getTodoResult.Item,
         ...requestBody,
         modifiedAt: new Date().toISOString(),
       };
 
-      
       await db.put({
         TableName: 'todos-db',
         Item: updatedTodo,

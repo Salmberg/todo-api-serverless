@@ -32,7 +32,7 @@ const deleteTodo = async (event, context) => {
 
     // Kontrollera om användaren äger den aktuella todo
     if (getTodoResult.Item.userId !== userId) {
-      return sendResponse(403, { success: false, message: 'Unauthorized: You cannot delete this Todo.' });
+      return sendResponse(401, { success: false, message: 'Unauthorized: You cannot delete this Todo.' });
     }
 
     // Om Todo finns och token är giltig och användaren äger den, fortsätt med att ta bort det
