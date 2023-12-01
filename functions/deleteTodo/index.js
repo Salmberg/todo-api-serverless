@@ -11,6 +11,7 @@ const deleteTodo = async (event, context) => {
     }
 
     const todoId = event.pathParameters.id;
+    const userId = event.id; 
 
     if (!todoId) {
       return sendResponse(400, { success: false, message: 'Todo ID is required.' });
@@ -29,8 +30,12 @@ const deleteTodo = async (event, context) => {
       return sendResponse(404, { success: false, message: 'Todo not found.' });
     }
 
+    // Kontrollera om användaren äger den aktuella todo
+    if (getTodoResult.Item.userId !== userId) {
+      return sendResponse(403, { success: false, message: 'Unauthorized: You cannot delete this Todo.' });
+    }
 
-    // Om Todo finns och token är giltig, fortsätt med att ta bort det
+    // Om Todo finns och token är giltig och användaren äger den, fortsätt med att ta bort det
     await db.delete({
       TableName: 'todos-db',
       Key: {
