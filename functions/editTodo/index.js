@@ -11,13 +11,14 @@ const updateTodo = async (event, context) => {
     }
 
     const todoId = event.pathParameters.id;
+    const userId = event.id;
 
-    // Kolla först om något id har angivits
+    // Kolla om todoId har angivits
     if (!todoId) {
       return sendResponse(400, { success: false, message: 'Todo ID is required.' });
     }
 
-    // Hämta befintlig Todo från DynamoDB för att kontrollera om den finns
+    // Hämta Todo från DynamoDB för att kontrollera om det finns
     const getTodoResult = await db.get({
       TableName: 'todos-db',
       Key: {
@@ -25,23 +26,28 @@ const updateTodo = async (event, context) => {
       },
     }).promise();
 
-    // Om Todo med det ID inte finns
+    // Om Todo inte finns, returnera ett felmeddelande
     if (!getTodoResult.Item) {
       return sendResponse(404, { success: false, message: 'Todo not found.' });
     }
 
+    // Kontrollera om användaren äger den aktuella todo
+    if (getTodoResult.Item.userId !== userId) {
+      return sendResponse(403, { success: false, message: 'Unauthorized: You cannot update this Todo.' });
+    }
+
     const requestBody = JSON.parse(event.body);
 
-    // Uppdatera modifiedAt endast om det har gjorts några ändringar
+    // Kontrollera om det finns några ändringar att uppdatera
     if (Object.keys(requestBody).length > 0) {
-      // Uppdatera Todo-fält
+      
       const updatedTodo = {
         ...getTodoResult.Item,
         ...requestBody,
         modifiedAt: new Date().toISOString(),
       };
 
-      // Denna uppdaterar Todo i DynamoDB
+      
       await db.put({
         TableName: 'todos-db',
         Item: updatedTodo,
